@@ -198,3 +198,39 @@ export async function getLatestStockQuery(emiten: string) {
   if (error) return null;
   return data;
 }
+
+/**
+ * Update the most recent previous day's real price for an emiten
+ */
+export async function updatePreviousDayRealPrice(emiten: string, currentDate: string, price: number) {
+  // 1. Find the latest successful record before currentDate
+  const { data: record, error: findError } = await supabase
+    .from('stock_queries')
+    .select('id, from_date')
+    .eq('emiten', emiten)
+    .eq('status', 'success')
+    .lt('from_date', currentDate)
+    .order('from_date', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (findError || !record) {
+    if (findError && findError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      console.error(`Error finding previous record for ${emiten} before ${currentDate}:`, findError);
+    }
+    return null;
+  }
+
+  // 2. Update that record with the new price
+  const { data, error: updateError } = await supabase
+    .from('stock_queries')
+    .update({ real_harga: price })
+    .eq('id', record.id)
+    .select();
+
+  if (updateError) {
+    console.error(`Error updating real_harga for ${emiten} on ${record.from_date}:`, updateError);
+  }
+
+  return data;
+}

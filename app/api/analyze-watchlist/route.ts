@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchWatchlist, fetchMarketDetector, fetchOrderbook, getTopBroker, fetchEmitenInfo } from '@/lib/stockbit';
 import { calculateTargets } from '@/lib/calculations';
-import { saveWatchlistAnalysis } from '@/lib/supabase';
+import { saveWatchlistAnalysis, updatePreviousDayRealPrice } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
     // Optional: Add authorization check
     const authHeader = request.headers.get('authorization');
     const expectedToken = process.env.CRON_SECRET;
-    
+
     if (expectedToken && authHeader !== `Bearer ${expectedToken}`) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     // Get current date for analysis
     const today = new Date().toISOString().split('T')[0];
-    
+
     // Fetch watchlist
     const watchlistResponse = await fetchWatchlist();
     const watchlistItems = watchlistResponse.data?.result || [];
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     // Analyze each watchlist item
     for (const item of watchlistItems) {
       const emiten = item.symbol || item.company_code;
-      
+
       try {
         // Fetch market data for today
         const [marketDetectorData, orderbookData, emitenInfoData] = await Promise.all([
@@ -101,11 +101,18 @@ export async function POST(request: NextRequest) {
           status: 'success'
         });
 
+        // Update previous day's record with real price (current price)
+        try {
+          await updatePreviousDayRealPrice(emiten, today, marketData.harga);
+        } catch (updateError) {
+          console.error(`Failed to update previous day real price for ${emiten}`, updateError);
+        }
+
         results.push({ emiten, status: 'success' });
 
       } catch (error) {
         console.error(`Error analyzing ${emiten}:`, error);
-        
+
         errors.push({
           emiten,
           error: error instanceof Error ? error.message : 'Unknown error'

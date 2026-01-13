@@ -16,6 +16,7 @@ interface AnalysisRecord {
   arb?: number;       // maps to bid_terbawah
   target_realistis?: number;
   target_max?: number;
+  real_harga?: number;
   status: string;
   error_message?: string;
 }
@@ -57,7 +58,7 @@ export default function WatchlistHistoryTable() {
   };
 
   // Debounced fetch for text inputs could be added, but manual trigger or loose effect is fine for now
-  
+
   const fetchHistory = async () => {
     setLoading(true);
     try {
@@ -107,18 +108,18 @@ export default function WatchlistHistoryTable() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <h2>📊 Watchlist Analysis History</h2>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button 
-            className="btn btn-primary" 
+          <button
+            className="btn btn-primary"
             onClick={fetchHistory}
             style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
           >
             Refresh
           </button>
-          <button 
-            className="btn btn-primary" 
+          <button
+            className="btn btn-primary"
             onClick={() => exportHistoryToPDF(data, filters)}
-            style={{ 
-              padding: '0.5rem 1rem', 
+            style={{
+              padding: '0.5rem 1rem',
               fontSize: '0.8rem',
               background: 'var(--gradient-success)',
               boxShadow: '0 4px 15px rgba(56, 239, 125, 0.4)'
@@ -223,7 +224,7 @@ export default function WatchlistHistoryTable() {
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
               <thead style={{ background: 'var(--bg-secondary)' }}>
                 <tr>
-                  <th 
+                  <th
                     style={{ whiteSpace: 'nowrap', padding: '1rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, cursor: 'pointer' }}
                     onClick={() => {
                       const direction = sort.column === 'from_date' && sort.direction === 'desc' ? 'asc' : 'desc';
@@ -232,7 +233,7 @@ export default function WatchlistHistoryTable() {
                   >
                     Date {sort.column === 'from_date' ? (sort.direction === 'desc' ? '↓' : '↑') : ''}
                   </th>
-                  <th 
+                  <th
                     style={{ whiteSpace: 'nowrap', padding: '1rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, cursor: 'pointer' }}
                     onClick={() => {
                       const direction = sort.column === 'emiten' && sort.direction === 'asc' ? 'desc' : 'asc';
@@ -244,6 +245,7 @@ export default function WatchlistHistoryTable() {
                   <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Harga</th>
                   <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Target R1</th>
                   <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Target Max</th>
+                  <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Real Harga</th>
                   <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Bandar</th>
                   <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Vol Bandar</th>
                   <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Avg Bandar</th>
@@ -254,7 +256,7 @@ export default function WatchlistHistoryTable() {
                 {data.map((record, index) => (
                   <tr
                     key={record.id}
-                    style={{ 
+                    style={{
                       borderBottom: index < data.length - 1 ? '1px solid var(--border-color)' : 'none',
                       background: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'
                     }}
@@ -287,6 +289,29 @@ export default function WatchlistHistoryTable() {
                         {calculateGain(record.harga, record.target_max)}
                       </div>
                     </td>
+                    <td style={{ padding: '0.5rem 1rem', textAlign: 'right', verticalAlign: 'middle' }}>
+                      {record.real_harga ? (
+                        <>
+                          <div style={{
+                            fontWeight: 600,
+                            fontVariantNumeric: 'tabular-nums',
+                            fontSize: '0.95rem',
+                            color: record.target_realistis && record.real_harga >= record.target_realistis
+                              ? 'var(--accent-success)'
+                              : (record.harga && record.real_harga > record.harga
+                                ? '#F59E0B' // Yellow/Orange for profit but below target
+                                : 'var(--accent-destructive)') // Red for loss
+                          }}>
+                            {formatNumber(record.real_harga)}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                            {calculateGain(record.harga, record.real_harga)}
+                          </div>
+                        </>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>-</span>
+                      )}
+                    </td>
                     <td style={{ padding: '0.75rem 1rem' }}>{record.bandar || '-'}</td>
                     <td style={{ padding: '0.75rem 1rem', textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontSize: '0.9rem' }}>
                       {formatNumber(record.barang_bandar)}
@@ -303,30 +328,30 @@ export default function WatchlistHistoryTable() {
                     </td>
                     <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
                       {record.status === 'success' ? (
-                        <span style={{ 
-                          display: 'inline-flex', 
-                          alignItems: 'center', 
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
                           justifyContent: 'center',
-                          width: '24px', 
-                          height: '24px', 
-                          borderRadius: '50%', 
-                          background: 'rgba(56, 239, 125, 0.1)', 
-                          color: 'var(--accent-success)' 
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          background: 'rgba(56, 239, 125, 0.1)',
+                          color: 'var(--accent-success)'
                         }}>
                           ✓
                         </span>
                       ) : (
                         <span
-                          style={{ 
-                            display: 'inline-flex', 
-                            alignItems: 'center', 
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
                             justifyContent: 'center',
-                            width: '24px', 
-                            height: '24px', 
-                            borderRadius: '50%', 
-                            background: 'rgba(245, 87, 108, 0.1)', 
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            background: 'rgba(245, 87, 108, 0.1)',
                             color: 'var(--accent-warning)',
-                            cursor: 'pointer' 
+                            cursor: 'pointer'
                           }}
                           title={record.error_message}
                         >
@@ -348,8 +373,8 @@ export default function WatchlistHistoryTable() {
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 className="btn"
-                style={{ 
-                  background: 'var(--bg-secondary)', 
+                style={{
+                  background: 'var(--bg-secondary)',
                   border: '1px solid var(--border-color)',
                   color: page === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
                   padding: '0.5rem 1rem'
@@ -361,8 +386,8 @@ export default function WatchlistHistoryTable() {
               </button>
               <button
                 className="btn"
-                style={{ 
-                  background: 'var(--bg-secondary)', 
+                style={{
+                  background: 'var(--bg-secondary)',
                   border: '1px solid var(--border-color)',
                   color: (page + 1) * pageSize >= totalCount ? 'var(--text-muted)' : 'var(--text-primary)',
                   padding: '0.5rem 1rem'
