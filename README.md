@@ -1,5 +1,8 @@
 # Adimology - Kalkulator Target Saham 📈
 
+> [!CAUTION]
+> **PERINGATAN KEAMANAN**: Jangan pernah membagikan URL aplikasi Netlify Anda secara publik. Aplikasi ini melakukan sinkronisasi token sesi Stockbit Anda ke database. Jika URL bocor, orang lain dapat menyalahgunakan akses tersebut. Gunakan aplikasi ini hanya untuk penggunaan pribadi.
+
 Adimology adalah aplikasi web canggih yang dirancang untuk membantu investor saham dalam menganalisis target harga saham berdasarkan data transaksi broker (bandarmologi) dari Stockbit.
 
 Aplikasi ini tidak hanya menghitung target harga, tetapi juga melacak performa analisis secara otomatis dan menyediakan wawasan mendalam tentang akumulasi broker.
