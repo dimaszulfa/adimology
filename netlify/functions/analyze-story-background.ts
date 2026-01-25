@@ -1,8 +1,8 @@
-import { 
-  updateAgentStory, 
-  createBackgroundJobLog, 
-  appendBackgroundJobLogEntry, 
-  updateBackgroundJobLog 
+import {
+  updateAgentStory,
+  createBackgroundJobLog,
+  appendBackgroundJobLogEntry,
+  updateBackgroundJobLog
 } from '../../lib/supabase';
 import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 
@@ -69,14 +69,14 @@ export default async (req: Request) => {
         status: 'error',
         error_message: errMsg
       });
-      
+
       if (jobLogId) {
         await updateBackgroundJobLog(jobLogId, {
           status: 'failed',
           error_message: errMsg,
         });
       }
-      
+
       return new Response(JSON.stringify({ error: 'API key not configured' }), { status: 500 });
     }
 
@@ -112,7 +112,7 @@ export default async (req: Request) => {
     const today = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
     const model = 'gemini-3-flash-preview';
     const systemPrompt = "Kamu adalah seorang analis saham profesional Indonesia yang ahli dalam menganalisa story dan katalis pergerakan harga saham.";
-    
+
     let keyStatsContext = '';
     if (keyStatsData) {
       keyStatsContext = `\nDATA KEY STATISTICS UNTUK ${emiten}:\n` + JSON.stringify(keyStatsData, null, 2) + '\n';
@@ -163,21 +163,53 @@ Berikan analisis dalam format JSON dengan struktur berikut (PASTIKAN HANYA OUTPU
   "kesimpulan": "kesimpulan analisis dalam 2-3 kalimat"
 }`;
 
-    // Execute generateContent
-    const response = await ai.models.generateContent({
-      model,
-      contents: `${systemPrompt}\n\n${userPrompt}`,
-      config,
-    });
+    // Execute generateContent with retry/fallback
+    let response;
+    let usedSearch = true;
+
+    try {
+      console.log(`[Agent Story] Attempting analysis with Gemini Search Grounding...`);
+      response = await ai.models.generateContent({
+        model,
+        contents: `${systemPrompt}\n\n${userPrompt}`,
+        config,
+      });
+    } catch (aiError: any) {
+      // Check for 429 (Quota) error
+      const isQuotaError = JSON.stringify(aiError).includes('429') ||
+        aiError.message?.includes('429') ||
+        aiError.message?.includes('RESOURCE_EXHAUSTED');
+
+      if (isQuotaError) {
+        console.warn('[Agent Story] Quota exceeded for Search Grounding. Retrying WITHOUT search tools...');
+        if (jobLogId) {
+          await appendBackgroundJobLogEntry(jobLogId, {
+            level: 'warn',
+            message: `Search Grounding quota exceeded. Falling back to internal AI knowledge...`,
+            emiten,
+          });
+        }
+
+        // Fallback: Try without search tools and without thinking (to be safe/fast)
+        usedSearch = false;
+        response = await ai.models.generateContent({
+          model,
+          contents: `${systemPrompt}\n\n${userPrompt}`,
+          // No tools or thinking config in fallback
+        });
+      } else {
+        // Not a quota error, rethrow
+        throw aiError;
+      }
+    }
 
     // Extract text from response
     const fullText = response.text || '';
 
     // Extract grounding chunks from response
-    // According to SDK, it should be in response.candidates[0].groundingMetadata or response.groundingMetadata
     const groundingMetadata = response.candidates?.[0]?.groundingMetadata || (response as any).groundingMetadata || {};
     const groundingChunks = groundingMetadata.groundingChunks || [];
-    
+
     // Process results into valid citations
     const sources: SourceCitation[] = groundingChunks
       .filter((chunk: GroundingChunk) => chunk.web?.uri)
@@ -187,7 +219,7 @@ Berikan analisis dalam format JSON dengan struktur berikut (PASTIKAN HANYA OUTPU
       }))
       .filter((source: SourceCitation) => source.uri.length > 0);
 
-    console.log(`[Agent Story] Analysis success. Grounding metadata segments: ${groundingMetadata.groundingSupports?.length || 0}. Sources found: ${sources.length}`);
+    console.log(`[Agent Story] Analysis success. Search Grounding used: ${usedSearch}. Sources found: ${sources.length}`);
 
     if (jobLogId) {
       await appendBackgroundJobLogEntry(jobLogId, {
@@ -209,7 +241,7 @@ Berikan analisis dalam format JSON dengan struktur berikut (PASTIKAN HANYA OUTPU
     } catch (parseError) {
       const errMsg = 'Failed to parse AI response';
       console.error('[Agent Story] Parse error:', parseError);
-      
+
       await updateAgentStory(parseInt(storyId), {
         status: 'error',
         error_message: errMsg
@@ -265,7 +297,7 @@ Berikan analisis dalam format JSON dengan struktur berikut (PASTIKAN HANYA OUTPU
   } catch (error) {
     const errMsg = String(error);
     console.error('[Agent Story] Critical error:', error);
-    
+
     if (jobLogId) {
       await appendBackgroundJobLogEntry(jobLogId, {
         level: 'error',
