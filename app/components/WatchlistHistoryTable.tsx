@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { exportHistoryToPDF } from '@/lib/pdfExport';
+import { exportHistoryToPDF, exportHistoryByEmitenToPDF } from '@/lib/pdfExport';
 
 interface AnalysisRecord {
   id: number;
@@ -36,6 +36,7 @@ export default function WatchlistHistoryTable() {
   const [page, setPage] = useState(0);
   const [sort, setSort] = useState({ column: 'from_date', direction: 'desc' });
   const [sectors, setSectors] = useState<string[]>([]);
+  const [recordsPerEmiten, setRecordsPerEmiten] = useState(10);
   const pageSize = 50;
 
   useEffect(() => {
@@ -108,27 +109,118 @@ export default function WatchlistHistoryTable() {
     <div className="glass-card-static">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <h2>📊 Watchlist Analysis History</h2>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
           <button
-            className="btn btn-primary"
+            className="solid-btn"
             onClick={fetchHistory}
-            style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
+            style={{ 
+              padding: '0 1.25rem', 
+              fontSize: '0.8rem',
+              fontWeight: '700',
+              borderRadius: '8px',
+              background: '#4b5563', // Solid Gray 600
+              color: 'white',
+              border: '1px solid #4b5563',
+              cursor: 'pointer',
+              height: '38px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(75, 85, 99, 0.3)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}
           >
             Refresh
           </button>
+          
           <button
-            className="btn btn-primary"
+            className="solid-btn"
             onClick={() => exportHistoryToPDF(data, filters)}
             style={{
-              padding: '0.5rem 1rem',
+              padding: '0 1.25rem',
               fontSize: '0.8rem',
-              background: 'var(--gradient-success)',
-              boxShadow: '0 4px 15px rgba(56, 239, 125, 0.4)'
+              fontWeight: '700',
+              borderRadius: '8px',
+              background: '#059669', // Emerald 600
+              color: 'white',
+              border: '1px solid #059669',
+              boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
+              whiteSpace: 'nowrap',
+              height: '38px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
             }}
             disabled={data.length === 0}
           >
-            📄 Export PDF
+            📄 Filtered PDF
           </button>
+
+          <div style={{ 
+            display: 'flex', 
+            gap: '0', 
+            alignItems: 'center', 
+            background: 'var(--bg-secondary)', 
+            padding: '2px', 
+            borderRadius: '10px', 
+            border: '1px solid var(--border-color)',
+            height: '38px',
+            boxSizing: 'border-box'
+          }}>
+            <select
+              className="input-field compact-input"
+              value={recordsPerEmiten}
+              onChange={(e) => setRecordsPerEmiten(Number(e.target.value))}
+              style={{
+                padding: '0 0.6rem',
+                fontSize: '0.85rem',
+                fontWeight: '700',
+                minWidth: '55px',
+                marginBottom: 0,
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                height: '100%'
+              }}
+            >
+              <option value={5} style={{ background: '#1a1a2e', color: 'white' }}>5</option>
+              <option value={10} style={{ background: '#1a1a2e', color: 'white' }}>10</option>
+              <option value={20} style={{ background: '#1a1a2e', color: 'white' }}>20</option>
+            </select>
+            <div style={{ width: '1px', height: '18px', background: 'var(--border-color)', margin: '0 4px' }}></div>
+            <button
+              className="solid-btn"
+              onClick={() => exportHistoryByEmitenToPDF(data, filters, recordsPerEmiten)}
+              style={{
+                padding: '0 1rem',
+                fontSize: '0.8rem',
+                fontWeight: '700',
+                background: 'var(--accent-primary)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                height: '32px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                marginRight: '2px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}
+              disabled={data.length === 0}
+            >
+              <span>📄 All Per Emiten PDF</span>
+            </button>
+          </div>
         </div>
       </div>
 

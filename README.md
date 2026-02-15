@@ -15,11 +15,14 @@ Adimology adalah aplikasi web untuk menganalisis target harga saham berdasarkan 
 
 ## Changelog
 
-### v0.1.0 (2026-02-11)
-- **Migrasi Otomatis**: Sekarang database mendukung migrasi otomatis (perlu eksekusi `supabase/000_init.sql` secara manual terlebih dahulu di Supabase), selanjutnya setiap build akan menjalankan file SQL baru secara otomatis.
-- **Visualisasi History Emiten**: Penambahan komponen visualisasi riwayat analisis emiten yang lebih informatif.
-- **Penyimpanan Parameter History**: Menyimpan preferensi jumlah riwayat (3, 5, 10, 20 hari) ke database untuk konsistensi antar sesi (file migrasi `supabase/009_add_keystat_signal.sql`).
-- **Fixing Retry Failed Job**: Perbaikan pada sistem retry untuk background job yang gagal agar lebih stabil.
+### v0.2.0 (2026-02-15)
+- **Advanced PDF Export**: Sistem pelaporan PDF baru yang lebih informatif, mencakup:
+  - Format portrait yang dioptimalkan (muat 20 baris per halaman).
+  - Ringkasan statistik agregat (Hit R1, Hit Max, Avg Bandar Plus/Minus).
+  - Ringkasan frekuensi Bandar per emiten.
+  - Grafik performa visual (dot tracking) terintegrasi dalam PDF.
+- **Revamp UI Tabel Riwayat**: Pembaruan gaya tombol "Solid-Btn" yang lebih premium dan konsisten di seluruh aplikasi, serta perbaikan visibilitas elemen pada Dark Mode.
+- **Sinkronisasi Format Laporan**: Menyamakan format output antara "Filtered PDF" dan "Per Emiten PDF" untuk konsistensi data.
 
 ---
 
