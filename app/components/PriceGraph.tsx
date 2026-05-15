@@ -68,7 +68,13 @@ export default function PriceGraph({ ticker }: PriceGraphProps) {
       "popup_height": "650",
       "popup_width": "1000",
       "studies": [
-        "STD;MA%1Cross",
+        "STD;SMA(3)",
+        "STD;SMA(5)",
+        "STD;SMA(10)",
+        "STD;SMA(20)",
+        "STD;SMA(50)",
+        "STD;SMA(100)",
+        "STD;SMA(200)",
         "STD;RSI"
       ],
       "support_host": "https://www.tradingview.com",
@@ -119,7 +125,7 @@ export default function PriceGraph({ ticker }: PriceGraphProps) {
           <button 
             className="tradingview-btn"
             onClick={() => {
-              const url = `https://www.tradingview.com/chart/acOC8yxo/?symbol=IDX_DLY%3A${ticker.toUpperCase()}`;
+              const url = `https://www.tradingview.com/chart/Ickj6MY2/?symbol=IDX_DLY%3A${ticker.toUpperCase()}`;
               window.open(url, 'TradingView', 'width=1200,height=800,menubar=no,toolbar=no,location=no,status=no,directories=no,resizable=yes,scrollbars=yes');
             }}
             style={{ padding: '6px 12px', fontSize: '0.7rem' }}
