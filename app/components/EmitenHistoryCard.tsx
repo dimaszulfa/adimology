@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getBrokerInfo } from '@/lib/brokers';
 import EmitenPriceChart from './EmitenPriceChart';
+import FundaChart from './FundaChart';
 
 interface AnalysisRecord {
   id: number;
@@ -330,12 +331,17 @@ export default function EmitenHistoryCard({ emiten }: EmitenHistoryCardProps) {
           }}>
             Performance
           </div>
-          <EmitenPriceChart 
-            data={data} 
+          <EmitenPriceChart
+            data={data}
             headerHeight={0} // Managed by parent component's layout
-            rowHeight={ROW_HEIGHT} 
+            rowHeight={ROW_HEIGHT}
           />
         </div>
+      </div>
+
+      {/* Funda Chart Section - Number of Shareholders */}
+      <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgba(139, 92, 246, 0.15)' }}>
+        <FundaChart ticker={emiten} />
       </div>
     </div>
   );
