@@ -1,8 +1,23 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import type { WatchlistItem, WatchlistGroup } from '@/lib/types';
-import { CheckCircle2, XCircle, MinusCircle, Search, Filter, X, RefreshCw } from 'lucide-react';
+import { CheckCircle2, XCircle, MinusCircle, Search, Filter, X, RefreshCw, Plus } from 'lucide-react';
+
+interface SearchResult {
+  id: string;
+  name: string;
+  symbol: string;
+  symbol_2: string;
+  symbol_3: string;
+  country: string;
+  exchange: string;
+  desc: string;
+  type: string;
+  is_following: boolean;
+  is_tradeable: boolean;
+  icon_url: string;
+}
 
 interface WatchlistSidebarProps {
   onSelect?: (symbol: string) => void;
@@ -23,6 +38,13 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
   const [filterSector, setFilterSector] = useState('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'OK' | 'NG' | 'Neutral'>('all');
   const [showFilters, setShowFilters] = useState(false);
+
+  // Add to Watchlist States
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [addingSymbol, setAddingSymbol] = useState<string | null>(null);
 
   // Fetch groups and watchlist items
   useEffect(() => {
@@ -205,6 +227,65 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
     }
   };
 
+  // Search companies for add to watchlist
+  const handleSearch = useCallback(async (query: string) => {
+    setSearchQuery(query);
+    if (query.trim().length < 1) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/watchlist/search?keyword=${encodeURIComponent(query)}`);
+      const json = await res.json();
+      if (json.success) {
+        setSearchResults(json.data || []);
+      }
+    } catch (err) {
+      console.error('Error searching companies:', err);
+    } finally {
+      setSearching(false);
+    }
+  }, []);
+
+  // Add company to watchlist
+  const handleAddToWatchlist = async (company: SearchResult) => {
+    if (!selectedGroupId) {
+      alert('Please select a watchlist group first');
+      return;
+    }
+
+    setAddingSymbol(company.symbol);
+    try {
+      const res = await fetch('/api/watchlist/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          watchlistId: selectedGroupId,
+          companyId: parseInt(company.id),
+        }),
+      });
+
+      const json = await res.json();
+      if (!json.success) {
+        throw new Error(json.error || 'Failed to add to watchlist');
+      }
+
+      // Close modal and refresh watchlist
+      setShowAddModal(false);
+      setSearchQuery('');
+      setSearchResults([]);
+      setRefreshSeed(prev => prev + 1);
+      handleSync();
+    } catch (err) {
+      console.error('Error adding to watchlist:', err);
+      alert(err instanceof Error ? err.message : 'Failed to add to watchlist');
+    } finally {
+      setAddingSymbol(null);
+    }
+  };
+
   // Extract unique sectors for dropdown
   const availableSectors = useMemo(() => {
     const sectors = new Set<string>();
@@ -325,6 +406,23 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
               title="Toggle Filters"
             >
               <Filter size={14} />
+            </button>
+            <button
+              onClick={() => setShowAddModal(true)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                padding: '4px',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                transition: 'all 0.2s'
+              }}
+              title="Add to Watchlist"
+            >
+              <Plus size={14} />
             </button>
               <span style={{
                 fontSize: '0.7rem',
@@ -596,6 +694,172 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
           );
         })}
       </div>
+
+      {/* Add to Watchlist Modal */}
+      {showAddModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }} onClick={() => setShowAddModal(false)}>
+          <div style={{
+            background: 'var(--bg-card)',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            width: '90%',
+            maxWidth: '400px',
+            maxHeight: '80vh',
+            display: 'flex',
+            flexDirection: 'column',
+            border: '1px solid var(--border-color)'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>Add to Watchlist</h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {selectedGroup && (
+              <div style={{
+                fontSize: '0.75rem',
+                color: 'var(--text-muted)',
+                marginBottom: '0.75rem',
+                padding: '0.5rem',
+                background: 'var(--bg-secondary)',
+                borderRadius: '8px'
+              }}>
+                Adding to: <span style={{ color: 'var(--accent-primary)', fontWeight: 500 }}>{selectedGroup.emoji ? `${selectedGroup.emoji} ` : ''}{selectedGroup.name}</span>
+              </div>
+            )}
+
+            {/* Search Input */}
+            <div style={{ position: 'relative', marginBottom: '1rem' }}>
+              <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input
+                type="text"
+                placeholder="Search company symbol or name..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 0.75rem 0.75rem 2.5rem',
+                  fontSize: '0.85rem',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '10px',
+                  color: 'var(--text-primary)',
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            {/* Search Results */}
+            <div style={{ flex: 1, overflowY: 'auto', maxHeight: '300px' }}>
+              {searching && (
+                <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)' }}>
+                  <div className="spinner" style={{ width: '20px', height: '20px', margin: '0 auto 0.5rem' }}></div>
+                  <div style={{ fontSize: '0.75rem' }}>Searching...</div>
+                </div>
+              )}
+
+              {!searching && searchQuery && searchResults.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                  No companies found for "{searchQuery}"
+                </div>
+              )}
+
+              {!searching && searchResults.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {searchResults.map((company) => (
+                    <div key={company.id} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.75rem',
+                      background: 'var(--bg-secondary)',
+                      borderRadius: '10px',
+                      border: '1px solid var(--border-color)'
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                          {company.symbol}
+                        </div>
+                        <div style={{
+                          fontSize: '0.7rem',
+                          color: 'var(--text-muted)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {company.desc || company.name}
+                        </div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                          {company.type} • {company.exchange}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleAddToWatchlist(company)}
+                        disabled={addingSymbol === company.symbol}
+                        style={{
+                          background: addingSymbol === company.symbol ? 'var(--accent-primary)' : 'rgba(102, 126, 234, 0.15)',
+                          border: 'none',
+                          color: addingSymbol === company.symbol ? '#fff' : 'var(--accent-primary)',
+                          cursor: addingSymbol === company.symbol ? 'not-allowed' : 'pointer',
+                          padding: '0.4rem 0.75rem',
+                          borderRadius: '8px',
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          transition: 'all 0.2s',
+                          minWidth: '70px',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {addingSymbol === company.symbol ? (
+                          <>
+                            <div className="spinner" style={{ width: '12px', height: '12px', borderWidth: '2px' }}></div>
+                          </>
+                        ) : (
+                          <>
+                            <Plus size={12} /> Add
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!searchQuery && (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                  <Search size={24} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+                  <div>Enter a company name or symbol to search</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

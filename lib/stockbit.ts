@@ -409,6 +409,69 @@ export async function fetchHistoricalSummary(
 }
 
 /**
+ * Search companies by keyword
+ */
+export interface SearchResult {
+  id: string;
+  name: string;
+  symbol: string;
+  symbol_2: string;
+  symbol_3: string;
+  country: string;
+  exchange: string;
+  desc: string;
+  type: string;
+  is_following: boolean;
+  is_tradeable: boolean;
+  icon_url: string;
+}
+
+export interface SearchCompanyResponse {
+  message: string;
+  data: {
+    company: SearchResult[];
+    chat: any[];
+    insider: any[];
+    people: any[];
+    sector: any[];
+    pagination: {
+      has_more_companies: boolean;
+      has_more_insiders: boolean;
+      has_more_users: boolean;
+    };
+  };
+}
+
+export async function searchCompanies(keyword: string): Promise<SearchResult[]> {
+  const url = `${STOCKBIT_BASE_URL}/search?keyword=${encodeURIComponent(keyword)}&page=1&type=company`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: await getHeaders(),
+  });
+
+  await handleApiResponse(response, 'Search Companies API');
+
+  const json: SearchCompanyResponse = await response.json();
+  return json.data?.company || [];
+}
+
+/**
+ * Add company to watchlist
+ */
+export async function addToWatchlist(watchlistId: number, companyId: number): Promise<void> {
+  const url = `${STOCKBIT_BASE_URL}/watchlist/${watchlistId}/company/item`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: await getHeaders(),
+    body: JSON.stringify({ company_id: companyId }),
+  });
+
+  await handleApiResponse(response, 'Add to Watchlist API');
+}
+
+/**
  * Delete item from watchlist
  */
 export async function deleteWatchlistItem(watchlistId: number, companyId: number): Promise<void> {
