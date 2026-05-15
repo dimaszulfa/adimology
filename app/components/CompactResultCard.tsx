@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import type { StockAnalysisResult } from '@/lib/types';
+import { Plus } from 'lucide-react';
 
 interface CompactResultCardProps {
   result: StockAnalysisResult;
@@ -10,20 +12,48 @@ interface CompactResultCardProps {
   copiedImage?: boolean;
 }
 
-export default function CompactResultCard({ 
-  result, 
-  onCopyText, 
-  onCopyImage, 
-  copiedText, 
-  copiedImage 
+export default function CompactResultCard({
+  result,
+  onCopyText,
+  onCopyImage,
+  copiedText,
+  copiedImage
 }: CompactResultCardProps) {
   const { input, stockbitData, marketData, calculated } = result;
+  const [addingToWatchlist, setAddingToWatchlist] = useState(false);
+  const [addedToWatchlist, setAddedToWatchlist] = useState(false);
 
   const formatNumber = (num: number | null | undefined) => num?.toLocaleString() ?? '-';
   
   const calculateGain = (target: number) => {
     const gain = ((target - marketData.harga) / marketData.harga) * 100;
     return `${gain >= 0 ? '+' : ''}${gain.toFixed(2)}`;
+  };
+
+  const handleAddToWatchlist = async () => {
+    if (addingToWatchlist || addedToWatchlist) return;
+    
+    setAddingToWatchlist(true);
+    try {
+      const res = await fetch('/api/watchlist/add-by-ticker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticker: input.emiten })
+      });
+      const json = await res.json();
+      
+      if (json.success) {
+        setAddedToWatchlist(true);
+        setTimeout(() => setAddedToWatchlist(false), 3000);
+      } else {
+        console.error('Failed to add to watchlist:', json.error);
+        alert(`Gagal menambahkan ke watchlist: ${json.error}`);
+      }
+    } catch (err) {
+      console.error('Error adding to watchlist:', err);
+    } finally {
+      setAddingToWatchlist(false);
+    }
   };
 
   return (
@@ -179,10 +209,11 @@ export default function CompactResultCard({
       </div>
 
       {/* Actions Footer - Fixed at bottom */}
-      <div className="compact-footer" data-html2canvas-ignore="true" style={{ margin: 0, borderRadius: '0 0 20px 20px' }}>
-        <button 
+      <div className="compact-footer" data-html2canvas-ignore="true" style={{ margin: 0, borderRadius: '0 0 20px 20px', display: 'flex', gap: '0.5rem' }}>
+        <button
           className={`compact-action-btn ${copiedText ? 'active' : ''}`}
           onClick={onCopyText}
+          style={{ flex: 1 }}
         >
           {copiedText ? (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -194,11 +225,12 @@ export default function CompactResultCard({
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
           )}
-          {copiedText ? 'Copied Text' : 'Copy Text'}
+          {copiedText ? 'Copied' : 'Copy'}
         </button>
-        <button 
+        <button
           className={`compact-action-btn ${copiedImage ? 'active' : ''}`}
           onClick={onCopyImage}
+          style={{ flex: 1 }}
         >
           {copiedImage ? (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -211,7 +243,33 @@ export default function CompactResultCard({
               <polyline points="21 15 16 10 5 21"></polyline>
             </svg>
           )}
-          {copiedImage ? 'Copied Image' : 'Copy Image'}
+          {copiedImage ? 'Copied' : 'Image'}
+        </button>
+        <button
+          className="compact-action-btn"
+          onClick={handleAddToWatchlist}
+          disabled={addingToWatchlist || addedToWatchlist}
+          style={{
+            flex: 1,
+            background: addedToWatchlist ? 'rgba(16, 185, 129, 0.15)' :
+                        addingToWatchlist ? 'rgba(102, 126, 234, 0.15)' :
+                        'var(--hover-bg)',
+            color: addedToWatchlist ? 'var(--accent-success)' :
+                   addingToWatchlist ? 'var(--text-muted)' :
+                   'var(--accent-primary)',
+            cursor: addingToWatchlist || addedToWatchlist ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {addingToWatchlist ? (
+            <div className="spinner" style={{ width: '14px', height: '14px', borderWidth: '2px' }}></div>
+          ) : addedToWatchlist ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          ) : (
+            <Plus size={14} />
+          )}
+          {addingToWatchlist ? 'Adding...' : addedToWatchlist ? 'Added!' : 'Watchlist'}
         </button>
       </div>
     </div>
