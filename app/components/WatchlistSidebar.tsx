@@ -803,12 +803,12 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
                       </div>
                       <button
                         onClick={() => handleAddToWatchlist(company)}
-                        disabled={addingSymbol === company.symbol}
+                        disabled={addingSymbol === company.name}
                         style={{
-                          background: addingSymbol === company.symbol ? 'var(--accent-primary)' : 'rgba(102, 126, 234, 0.15)',
+                          background: addingSymbol === company.name ? 'var(--accent-primary)' : 'rgba(102, 126, 234, 0.15)',
                           border: 'none',
-                          color: addingSymbol === company.symbol ? '#fff' : 'var(--accent-primary)',
-                          cursor: addingSymbol === company.symbol ? 'not-allowed' : 'pointer',
+                          color: addingSymbol === company.name ? '#fff' : 'var(--accent-primary)',
+                          cursor: addingSymbol === company.name ? 'not-allowed' : 'pointer',
                           padding: '0.4rem 0.75rem',
                           borderRadius: '8px',
                           fontSize: '0.75rem',
@@ -821,7 +821,7 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
                           justifyContent: 'center'
                         }}
                       >
-                        {addingSymbol === company.symbol ? (
+                        {addingSymbol === company.name ? (
                           <>
                             <div className="spinner" style={{ width: '12px', height: '12px', borderWidth: '2px' }}></div>
                           </>
