@@ -484,3 +484,58 @@ export async function deleteWatchlistItem(watchlistId: number, companyId: number
 
   await handleApiResponse(response, 'Delete Watchlist Item API');
 }
+
+// Funda Chart types for shareholder data
+const STOCKBIT_EXODUS_URL = 'https://exodus.stockbit.com';
+
+export interface FundaChartDataPoint {
+  date: string;
+  'Number of Shareholders': number;
+}
+
+export interface FundaChartResponse {
+  data: {
+    result: {
+      [key: string]: {
+        date: string;
+        'Number of Shareholders': number;
+      }[];
+    };
+  };
+}
+
+/**
+ * Fetch funda chart data (Number of Shareholders) from Stockbit
+ * @param itemId The company item ID (e.g., 21334)
+ * @param ticker The stock ticker symbol (e.g., ENZO)
+ * @param timeframe Time period: 1w, 1m, 3m, 6m, 1y, 2y, 5y
+ */
+export async function fetchFundaChart(
+  itemId: string,
+  ticker: string,
+  timeframe: string = '1y'
+): Promise<FundaChartDataPoint[]> {
+  const url = `${STOCKBIT_EXODUS_URL}/fundachart?item=${itemId}&companies=${ticker}&timeframe=${timeframe}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: await getHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Funda Chart API error: ${response.status} ${response.statusText}`);
+  }
+
+  const json: FundaChartResponse = await response.json();
+  
+  // The data is stored under the ticker key (e.g., "ENZO")
+  const tickerData = json.data?.result?.[ticker];
+  if (!tickerData) {
+    return [];
+  }
+
+  return tickerData.map(point => ({
+    date: point.date,
+    'Number of Shareholders': point['Number of Shareholders'],
+  }));
+}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { StockAnalysisResult } from '@/lib/types';
 import { Plus } from 'lucide-react';
+import FundaChartModal from './FundaChartModal';
 
 interface CompactResultCardProps {
   result: StockAnalysisResult;
@@ -22,6 +23,7 @@ export default function CompactResultCard({
   const { input, stockbitData, marketData, calculated } = result;
   const [addingToWatchlist, setAddingToWatchlist] = useState(false);
   const [addedToWatchlist, setAddedToWatchlist] = useState(false);
+  const [showFundaChart, setShowFundaChart] = useState(false);
 
   const formatNumber = (num: number | null | undefined) => num?.toLocaleString() ?? '-';
   
@@ -271,7 +273,32 @@ export default function CompactResultCard({
           )}
           {addingToWatchlist ? 'Adding...' : addedToWatchlist ? 'Added!' : 'Watchlist'}
         </button>
+        <button
+          className="compact-action-btn"
+          onClick={() => setShowFundaChart(true)}
+          style={{
+            flex: 1,
+            background: 'var(--hover-bg)',
+            color: '#8b5cf6',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          Funda
+        </button>
       </div>
+
+      {/* Funda Chart Modal */}
+      <FundaChartModal
+        isOpen={showFundaChart}
+        onClose={() => setShowFundaChart(false)}
+        ticker={input.emiten}
+        companyName={result.sector || undefined}
+      />
     </div>
   );
 }

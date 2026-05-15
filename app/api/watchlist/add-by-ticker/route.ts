@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       const { fetchWatchlistGroups } = await import('@/lib/stockbit');
       const groups = await fetchWatchlistGroups();
       if (groups && groups.length > 0) {
-        targetWatchlistId = groups[0].id;
+        targetWatchlistId = groups[0].watchlist_id;
       }
     }
 
