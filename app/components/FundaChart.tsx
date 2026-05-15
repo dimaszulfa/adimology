@@ -15,18 +15,17 @@ import {
 
 interface FundaChartDataPoint {
   date: string;
-  'Number of Shareholders': number;
-}
-
-interface PriceDataPoint {
-  date: string;
-  close: number;
-  closeFormatted?: string;
+  'Number of Shareholders'?: number;
+  'Price'?: number;
 }
 
 interface FundaChartProps {
   ticker: string;
-  priceData?: PriceDataPoint[];
+}
+
+interface ApiResponse {
+  shareholders: FundaChartDataPoint[];
+  prices: FundaChartDataPoint[];
 }
 
 const TIMEFRAMES = [
@@ -54,9 +53,14 @@ const formatDate = (dateStr: string): string => {
   return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: '2-digit' });
 };
 
-export default function FundaChart({ ticker, priceData }: FundaChartProps) {
+const formatPrice = (price: number): string => {
+  return `Rp ${price.toLocaleString('id-ID')}`;
+};
+
+export default function FundaChart({ ticker }: FundaChartProps) {
   const [timeframe, setTimeframe] = useState('1y');
-  const [fundaData, setFundaData] = useState<FundaChartDataPoint[]>([]);
+  const [shareholders, setShareholders] = useState<FundaChartDataPoint[]>([]);
+  const [prices, setPrices] = useState<FundaChartDataPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showShareholders, setShowShareholders] = useState(true);
@@ -76,7 +80,8 @@ export default function FundaChart({ ticker, priceData }: FundaChartProps) {
         throw new Error(json.error || 'Failed to fetch funda chart data');
       }
       
-      setFundaData(json.data || []);
+      setShareholders(json.shareholders || []);
+      setPrices(json.prices || []);
     } catch (err: any) {
       console.error('Funda chart error:', err);
       setError(err.message || 'Failed to load shareholder data');
@@ -89,25 +94,41 @@ export default function FundaChart({ ticker, priceData }: FundaChartProps) {
     fetchFundaData();
   }, [fetchFundaData]);
 
-  // Merge funda data with price data by date
-  const mergedData = fundaData.map((funda) => {
-    const pricePoint = priceData?.find(
-      (p) => p.date.split(' ')[0] === funda.date.split('T')[0] || p.date === funda.date
+  // Merge shareholders and price data by date
+  const mergedData = shareholders.map((sh) => {
+    const pricePoint = prices.find(
+      (p) => p.date === sh.date
     );
     return {
-      ...funda,
-      price: pricePoint?.close || pricePoint?.closeFormatted || null,
-      priceLabel: pricePoint ? `Rp ${(pricePoint.close || parseFloat(pricePoint.closeFormatted || '0')).toLocaleString('id-ID')}` : null,
+      date: sh.date,
+      'Number of Shareholders': sh['Number of Shareholders'],
+      'Price': pricePoint?.['Price'] || null,
     };
   });
 
+  // Use only price data if no shareholders (for chart display)
+  const chartData = mergedData.length > 0 ? mergedData : prices.map((p) => ({
+    date: p.date,
+    'Number of Shareholders': null,
+    'Price': p['Price'],
+  }));
+
   // Calculate statistics
   const shareholderStats = {
-    current: fundaData[fundaData.length - 1]?.['Number of Shareholders'] || 0,
-    min: fundaData.length > 0 ? Math.min(...fundaData.map((d) => d['Number of Shareholders'])) : 0,
-    max: fundaData.length > 0 ? Math.max(...fundaData.map((d) => d['Number of Shareholders'])) : 0,
-    change: fundaData.length > 1
-      ? ((fundaData[fundaData.length - 1]['Number of Shareholders'] - fundaData[0]['Number of Shareholders']) / fundaData[0]['Number of Shareholders']) * 100
+    current: shareholders[shareholders.length - 1]?.['Number of Shareholders'] || 0,
+    min: shareholders.length > 0 ? Math.min(...shareholders.map((d) => d['Number of Shareholders'] || 0)) : 0,
+    max: shareholders.length > 0 ? Math.max(...shareholders.map((d) => d['Number of Shareholders'] || 0)) : 0,
+    change: shareholders.length > 1
+      ? (((shareholders[shareholders.length - 1]?.['Number of Shareholders'] || 0) - (shareholders[0]?.['Number of Shareholders'] || 0)) / (shareholders[0]?.['Number of Shareholders'] || 1)) * 100
+      : 0,
+  };
+
+  const priceStats = {
+    current: prices[prices.length - 1]?.['Price'] || 0,
+    min: prices.length > 0 ? Math.min(...prices.map((d) => d['Price'] || 0)) : 0,
+    max: prices.length > 0 ? Math.max(...prices.map((d) => d['Price'] || 0)) : 0,
+    change: prices.length > 1
+      ? (((prices[prices.length - 1]?.['Price'] || 0) - (prices[0]?.['Price'] || 0)) / (prices[0]?.['Price'] || 1)) * 100
       : 0,
   };
 
@@ -120,7 +141,9 @@ export default function FundaChart({ ticker, priceData }: FundaChartProps) {
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: {entry.name === 'Shareholders'
                 ? formatNumber(entry.value)
-                : `Rp ${entry.value?.toLocaleString('id-ID') || 'N/A'}`
+                : entry.name === 'Price'
+                ? formatPrice(entry.value)
+                : entry.value
               }
             </p>
           ))}
@@ -160,27 +183,33 @@ export default function FundaChart({ ticker, priceData }: FundaChartProps) {
       {/* Stats cards */}
       <div className="grid grid-cols-4 gap-3 mb-4">
         <div className="bg-[#16213e] rounded-lg p-3">
-          <p className="text-xs text-gray-400 mb-1">Current</p>
+          <p className="text-xs text-gray-400 mb-1">Shareholders</p>
           <p className="text-lg font-semibold text-purple-400">
             {formatNumber(shareholderStats.current)}
           </p>
+          <p className={`text-xs ${shareholderStats.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {shareholderStats.change >= 0 ? '+' : ''}{shareholderStats.change.toFixed(1)}%
+          </p>
         </div>
         <div className="bg-[#16213e] rounded-lg p-3">
-          <p className="text-xs text-gray-400 mb-1">Min</p>
+          <p className="text-xs text-gray-400 mb-1">Min Holders</p>
           <p className="text-lg font-semibold text-gray-300">
             {formatNumber(shareholderStats.min)}
           </p>
         </div>
         <div className="bg-[#16213e] rounded-lg p-3">
-          <p className="text-xs text-gray-400 mb-1">Max</p>
+          <p className="text-xs text-gray-400 mb-1">Max Holders</p>
           <p className="text-lg font-semibold text-gray-300">
             {formatNumber(shareholderStats.max)}
           </p>
         </div>
         <div className="bg-[#16213e] rounded-lg p-3">
-          <p className="text-xs text-gray-400 mb-1">Change</p>
-          <p className={`text-lg font-semibold ${shareholderStats.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {shareholderStats.change >= 0 ? '+' : ''}{shareholderStats.change.toFixed(1)}%
+          <p className="text-xs text-gray-400 mb-1">Price</p>
+          <p className="text-lg font-semibold text-amber-400">
+            {priceStats.current > 0 ? formatPrice(priceStats.current) : 'N/A'}
+          </p>
+          <p className={`text-xs ${priceStats.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {priceStats.change >= 0 ? '+' : ''}{priceStats.change.toFixed(1)}%
           </p>
         </div>
       </div>
@@ -236,7 +265,7 @@ export default function FundaChart({ ticker, priceData }: FundaChartProps) {
       {!loading && !error && (
         <div style={{ width: '100%', height: 300 }}>
           <ResponsiveContainer>
-            <ComposedChart data={mergedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="shareholderGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
@@ -309,7 +338,7 @@ export default function FundaChart({ ticker, priceData }: FundaChartProps) {
                 <Line
                   yAxisId="price"
                   type="monotone"
-                  dataKey="price"
+                  dataKey="Price"
                   name="Price"
                   stroke="#f59e0b"
                   strokeWidth={2}

@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchFundaChart, searchCompanies } from '@/lib/stockbit';
+import { fetchFundaChart, searchCompanies, FUNDA_CHART_ITEMS } from '@/lib/stockbit';
 
 /**
  * GET /api/stock/fundachart
- * Fetch funda chart data (Number of Shareholders) from Stockbit API
+ * Fetch funda chart data (Price AND Number of Shareholders) from Stockbit API
+ * Uses comma-separated item IDs: 2661 (Price), 21334 (Number of Shareholders)
  *
  * Query params:
  * - ticker: Stock ticker symbol (e.g., "ENZO") - REQUIRED
  * - timeframe: Time period - 1w, 1m, 3m, 6m, 1y, 2y, 5y (default: "1y")
- *
- * Note: The item ID is fetched automatically by searching the company first
  */
 export async function GET(request: NextRequest) {
   try {
@@ -24,7 +23,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Search for the company to get the item ID
+    // Search for the company to verify it exists
     const searchResults = await searchCompanies(ticker);
     
     if (!searchResults || searchResults.length === 0) {
@@ -41,17 +40,19 @@ export async function GET(request: NextRequest) {
             r.symbol_3?.toUpperCase() === ticker.toUpperCase()
     );
     const company = exactMatch || searchResults[0];
-    const itemId = company.id;
 
-    const data = await fetchFundaChart(itemId, ticker, timeframe);
+    // Use comma-separated item IDs: 2661 (Price), 21334 (Number of Shareholders)
+    const itemIds = `${FUNDA_CHART_ITEMS.PRICE},${FUNDA_CHART_ITEMS.NUMBER_OF_SHAREHOLDERS}`;
+    
+    const { shareholders, prices } = await fetchFundaChart(itemIds, ticker, timeframe);
 
     return NextResponse.json({
       success: true,
       ticker,
       companyName: company.name,
-      itemId,
       timeframe,
-      data,
+      shareholders,
+      prices,
     });
   } catch (error: any) {
     console.error('Funda chart API error:', error);

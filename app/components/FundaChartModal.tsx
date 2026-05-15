@@ -3,18 +3,11 @@
 import { useState, useEffect } from 'react';
 import FundaChart from './FundaChart';
 
-interface PriceDataPoint {
-  date: string;
-  close: number;
-  closeFormatted?: string;
-}
-
 interface FundaChartModalProps {
   isOpen: boolean;
   onClose: () => void;
   ticker: string;
   companyName?: string;
-  priceData?: PriceDataPoint[];
 }
 
 export default function FundaChartModal({
@@ -22,7 +15,6 @@ export default function FundaChartModal({
   onClose,
   ticker,
   companyName,
-  priceData,
 }: FundaChartModalProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -74,15 +66,12 @@ export default function FundaChartModal({
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
-          <FundaChart
-            ticker={ticker}
-            priceData={priceData}
-          />
+          <FundaChart ticker={ticker} />
         </div>
 
         {/* Footer */}
         <div className="p-4 border-t border-[#16213e] flex justify-between items-center text-sm text-gray-500">
-          <span>Number of Shareholders from Stockbit</span>
+          <span>Number of Shareholders & Price from Stockbit</span>
           <span>{ticker}</span>
         </div>
       </div>

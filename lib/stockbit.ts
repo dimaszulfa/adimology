@@ -485,37 +485,52 @@ export async function deleteWatchlistItem(watchlistId: number, companyId: number
   await handleApiResponse(response, 'Delete Watchlist Item API');
 }
 
-// Funda Chart types for shareholder data
+// Funda Chart types for shareholder and price data
 const STOCKBIT_EXODUS_URL = 'https://exodus.stockbit.com';
+
+// Item IDs for funda chart
+export const FUNDA_CHART_ITEMS = {
+  PRICE: '2661',
+  NUMBER_OF_SHAREHOLDERS: '21334',
+};
+
+export interface FundaChartRatioItem {
+  item_id: number;
+  item_name: string;
+  chart_data: {
+    date: number;
+    formated_date: string;
+    value: number;
+  }[];
+}
 
 export interface FundaChartDataPoint {
   date: string;
-  'Number of Shareholders': number;
+  'Number of Shareholders'?: number;
+  'Price'?: number;
 }
 
 export interface FundaChartResponse {
   data: {
-    result: {
-      [key: string]: {
-        date: string;
-        'Number of Shareholders': number;
-      }[];
-    };
-  };
+    company_name: string;
+    ratios: FundaChartRatioItem[];
+  }[];
 }
 
 /**
- * Fetch funda chart data (Number of Shareholders) from Stockbit
- * @param itemId The company item ID (e.g., 21334)
+ * Fetch funda chart data (Price AND Number of Shareholders) from Stockbit
+ * Uses comma-separated item IDs: 2661 (Price), 21334 (Number of Shareholders)
+ *
+ * @param itemIds Comma-separated item IDs (e.g., "2661,21334")
  * @param ticker The stock ticker symbol (e.g., ENZO)
  * @param timeframe Time period: 1w, 1m, 3m, 6m, 1y, 2y, 5y
  */
 export async function fetchFundaChart(
-  itemId: string,
+  itemIds: string,
   ticker: string,
   timeframe: string = '1y'
-): Promise<FundaChartDataPoint[]> {
-  const url = `${STOCKBIT_EXODUS_URL}/fundachart?item=${itemId}&companies=${ticker}&timeframe=${timeframe}`;
+): Promise<{ shareholders: FundaChartDataPoint[]; prices: FundaChartDataPoint[] }> {
+  const url = `${STOCKBIT_EXODUS_URL}/fundachart?item=${itemIds}&companies=${ticker}&timeframe=${timeframe}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -528,14 +543,25 @@ export async function fetchFundaChart(
 
   const json: FundaChartResponse = await response.json();
   
-  // The data is stored under the ticker key (e.g., "ENZO")
-  const tickerData = json.data?.result?.[ticker];
-  if (!tickerData) {
-    return [];
+  // Extract data from ratios array
+  const data = json.data?.[0];
+  if (!data || !data.ratios) {
+    return { shareholders: [], prices: [] };
   }
 
-  return tickerData.map(point => ({
-    date: point.date,
-    'Number of Shareholders': point['Number of Shareholders'],
+  // Find Number of Shareholders data
+  const shareholdersRatio = data.ratios.find(r => r.item_name === 'Number of Shareholders');
+  const shareholders: FundaChartDataPoint[] = (shareholdersRatio?.chart_data || []).map(point => ({
+    date: point.formated_date,
+    'Number of Shareholders': point.value,
   }));
+
+  // Find Price data
+  const priceRatio = data.ratios.find(r => r.item_name === 'Price');
+  const prices: FundaChartDataPoint[] = (priceRatio?.chart_data || []).map(point => ({
+    date: point.formated_date,
+    'Price': point.value,
+  }));
+
+  return { shareholders, prices };
 }
