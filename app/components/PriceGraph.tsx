@@ -68,12 +68,9 @@ export default function PriceGraph({ ticker }: PriceGraphProps) {
       "popup_height": "650",
       "popup_width": "1000",
       "studies": [
-      "MASimple@tv-basicstudies",
+        "STD;MA%1Cross",
         "STD;RSI"
       ],
-      "studies_overrides": {
-        "moving average.length": 20
-      },
       "support_host": "https://www.tradingview.com",
       "backgroundColor": isLightTheme ? "#ffffff" : "#0F0F0F",
       "gridColor": isLightTheme ? "rgba(46, 46, 46, 0.06)" : "rgba(242, 242, 242, 0.06)"
