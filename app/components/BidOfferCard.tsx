@@ -78,14 +78,14 @@ export default function BidOfferCard({ ticker }: BidOfferCardProps) {
   const topBids = bid.slice(0, 10);
   const topOffers = offer.slice(0, 10);
 
-  // Calculate max volume for scaling
+  // Calculate max volume for scaling (volume is in shares, lot = volume / 100)
   const maxBidVol = Math.max(...topBids.map((b: BidOfferItem) => parseInt(b.volume) || 0));
   const maxOfferVol = Math.max(...topOffers.map((o: BidOfferItem) => parseInt(o.volume) || 0));
   const maxVol = Math.max(maxBidVol, maxOfferVol);
 
-  // Calculate total bid/offer lots
-  const totalBidLots = topBids.reduce((sum: number, b: BidOfferItem) => sum + (parseInt(b.que_num) || 0), 0);
-  const totalOfferLots = topOffers.reduce((sum: number, o: BidOfferItem) => sum + (parseInt(o.que_num) || 0), 0);
+  // Calculate total bid/offer lots from volume (volume is shares, 1 lot = 100 shares)
+  const totalBidLots = topBids.reduce((sum: number, b: BidOfferItem) => sum + Math.floor((parseInt(b.volume) || 0) / 100), 0);
+  const totalOfferLots = topOffers.reduce((sum: number, o: BidOfferItem) => sum + Math.floor((parseInt(o.volume) || 0) / 100), 0);
 
   const formatVolume = (vol: string) => {
     const num = parseInt(vol) || 0;
@@ -212,12 +212,12 @@ export default function BidOfferCard({ ticker }: BidOfferCardProps) {
                 </span>
               </div>
               
-              {/* Bid Lots */}
+              {/* Bid Lots (volume / 100) */}
               <div style={{ textAlign: 'center', fontSize: '0.65rem', color: '#9ca3af' }}>
-                {bidItem.que_num}
+                {Math.floor((parseInt(bidItem.volume) || 0) / 100).toLocaleString('id-ID')}
               </div>
 
-              {/* Offer Vol */}
+              {/* Offer Vol (shares) */}
               <div style={{ textAlign: 'center', fontSize: '0.65rem', color: '#9ca3af' }}>
                 {formatVolume(bidItem.volume)}
               </div>
