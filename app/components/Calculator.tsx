@@ -7,6 +7,7 @@ import BrokerSummaryCard from './BrokerSummaryCard';
 import KeyStatsCard from './KeyStatsCard';
 import AgentStoryCard from './AgentStoryCard';
 import PriceGraph from './PriceGraph';
+import BidOfferCard from './BidOfferCard';
 import BrokerFlowCard from './BrokerFlowCard';
 import EmitenHistoryCard from './EmitenHistoryCard';
 
@@ -454,6 +455,11 @@ export default function Calculator({ selectedStock }: CalculatorProps) {
                 <BrokerFlowCard emiten={result.input.emiten} />
               </div>
               */}
+
+              {/* BidOffer Section - Below Advanced Chart */}
+              <div style={{ flex: '1 1 0', minWidth: '400px', display: 'flex' }}>
+                <BidOfferCard ticker={result.input.emiten} />
+              </div>
             </div>
 
             {/* Agent Story Section - Full Width */}
