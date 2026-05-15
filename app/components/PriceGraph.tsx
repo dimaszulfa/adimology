@@ -68,15 +68,12 @@ export default function PriceGraph({ ticker }: PriceGraphProps) {
       "popup_height": "650",
       "popup_width": "1000",
       "studies": [
-        "STD;SMA(3)",
-        "STD;SMA(5)",
-        "STD;SMA(10)",
-        "STD;SMA(20)",
-        "STD;SMA(50)",
-        "STD;SMA(100)",
-        "STD;SMA(200)",
+      "MASimple@tv-basicstudies",
         "STD;RSI"
       ],
+      "studies_overrides": {
+        "moving average.length": 20
+      },
       "support_host": "https://www.tradingview.com",
       "backgroundColor": isLightTheme ? "#ffffff" : "#0F0F0F",
       "gridColor": isLightTheme ? "rgba(46, 46, 46, 0.06)" : "rgba(242, 242, 242, 0.06)"
