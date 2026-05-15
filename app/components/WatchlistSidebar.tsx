@@ -6,15 +6,10 @@ import { CheckCircle2, XCircle, MinusCircle, Search, Filter, X, RefreshCw, Plus 
 
 interface SearchResult {
   id: string;
-  name: string;
-  symbol: string;
-  symbol_2: string;
-  symbol_3: string;
-  country: string;
-  exchange: string;
-  desc: string;
-  type: string;
-  is_following: boolean;
+  name: string;       // Symbol code (e.g., "ENZO")
+  desc: string;       // Company name (e.g., "Morenzo Abadi Perkasa Tbk")
+  type: string;       // "Saham" or "Waran"
+  exchange: string;   // "IDX"
   is_tradeable: boolean;
   icon_url: string;
 }
@@ -256,7 +251,7 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
       return;
     }
 
-    setAddingSymbol(company.symbol);
+    setAddingSymbol(company.name);
     try {
       const res = await fetch('/api/watchlist/add', {
         method: 'POST',
@@ -800,7 +795,7 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
                     }}>
                       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
-                          {company.symbol} <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>— {company.desc || company.name}</span>
+                          {company.name} <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>— {company.desc}</span>
                         </div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                           {company.type} • {company.exchange}
