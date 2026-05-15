@@ -168,18 +168,20 @@ export default function BidOfferCard({ ticker }: BidOfferCardProps) {
       {/* Bid-Offer Depth */}
       <div style={{ padding: '0.75rem 1rem' }}>
         {/* Header Row */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 60px 60px 1fr',
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '60px 60px 1fr 1fr 60px 60px',
           gap: '0.25rem',
           marginBottom: '0.5rem',
           fontSize: '0.6rem',
           color: '#6b7280'
         }}>
-          <div style={{ textAlign: 'left' }}>BID</div>
+          <div style={{ textAlign: 'center' }}>FREQ</div>
           <div style={{ textAlign: 'center' }}>LOT</div>
-          <div style={{ textAlign: 'center' }}>VOL</div>
+          <div style={{ textAlign: 'left' }}>BID</div>
           <div style={{ textAlign: 'right' }}>OFFER</div>
+          <div style={{ textAlign: 'center' }}>LOT</div>
+          <div style={{ textAlign: 'center' }}>FREQ</div>
         </div>
 
         {/* Depth Rows */}
@@ -191,17 +193,27 @@ export default function BidOfferCard({ ticker }: BidOfferCardProps) {
           const offerWidth = maxVol > 0 ? (offerVol / maxVol) * 100 : 0;
 
           return (
-            <div key={idx} style={{ 
-              display: 'grid', 
-              gridTemplateColumns: '1fr 60px 60px 1fr',
+            <div key={idx} style={{
+              display: 'grid',
+              gridTemplateColumns: '60px 60px 1fr 1fr 60px 60px',
               gap: '0.25rem',
               marginBottom: '2px',
               alignItems: 'center'
             }}>
+              {/* Bid Freq (que_num) */}
+              <div style={{ textAlign: 'center', fontSize: '0.65rem', color: '#9ca3af' }}>
+                {bidItem.que_num}
+              </div>
+
+              {/* Bid Lots (volume / 100) */}
+              <div style={{ textAlign: 'center', fontSize: '0.65rem', color: '#9ca3af' }}>
+                {Math.floor((parseInt(bidItem.volume) || 0) / 100).toLocaleString('id-ID')}
+              </div>
+
               {/* Bid */}
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <div style={{ 
-                  height: '18px', 
+                <div style={{
+                  height: '18px',
                   width: `${bidWidth}%`,
                   background: 'linear-gradient(to right, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.1))',
                   borderRadius: '2px',
@@ -211,16 +223,6 @@ export default function BidOfferCard({ ticker }: BidOfferCardProps) {
                   {formatPrice(bidItem.price)}
                 </span>
               </div>
-              
-              {/* Bid Lots (volume / 100) */}
-              <div style={{ textAlign: 'center', fontSize: '0.65rem', color: '#9ca3af' }}>
-                {Math.floor((parseInt(bidItem.volume) || 0) / 100).toLocaleString('id-ID')}
-              </div>
-
-              {/* Offer Vol (shares) */}
-              <div style={{ textAlign: 'center', fontSize: '0.65rem', color: '#9ca3af' }}>
-                {formatVolume(bidItem.volume)}
-              </div>
 
               {/* Offer */}
               {offerItem ? (
@@ -228,8 +230,8 @@ export default function BidOfferCard({ ticker }: BidOfferCardProps) {
                   <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 500 }}>
                     {formatPrice(offerItem.price)}
                   </span>
-                  <div style={{ 
-                    height: '18px', 
+                  <div style={{
+                    height: '18px',
                     width: `${offerWidth}%`,
                     background: 'linear-gradient(to left, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.1))',
                     borderRadius: '2px',
@@ -239,14 +241,24 @@ export default function BidOfferCard({ ticker }: BidOfferCardProps) {
               ) : (
                 <div />
               )}
+
+              {/* Offer Lots (volume / 100) */}
+              <div style={{ textAlign: 'center', fontSize: '0.65rem', color: '#9ca3af' }}>
+                {offerItem ? Math.floor((parseInt(offerItem.volume) || 0) / 100).toLocaleString('id-ID') : '-'}
+              </div>
+
+              {/* Offer Freq (que_num) */}
+              <div style={{ textAlign: 'center', fontSize: '0.65rem', color: '#9ca3af' }}>
+                {offerItem ? offerItem.que_num : '-'}
+              </div>
             </div>
           );
         })}
 
         {/* Summary Row */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 60px 60px 1fr',
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '60px 60px 1fr 1fr 60px 60px',
           gap: '0.25rem',
           marginTop: '0.5rem',
           paddingTop: '0.5rem',
@@ -254,14 +266,16 @@ export default function BidOfferCard({ ticker }: BidOfferCardProps) {
           fontSize: '0.65rem',
           color: '#6b7280'
         }}>
-          <div style={{ textAlign: 'left' }}>
-            Total: <span style={{ color: '#22c55e' }}>{totalBidLots}</span>
+          <div />
+          <div style={{ textAlign: 'center' }}>
+            <span style={{ color: '#22c55e' }}>{totalBidLots.toLocaleString('id-ID')}</span>
           </div>
           <div />
           <div />
-          <div style={{ textAlign: 'right' }}>
-            Total: <span style={{ color: '#ef4444' }}>{totalOfferLots}</span>
+          <div style={{ textAlign: 'center' }}>
+            <span style={{ color: '#ef4444' }}>{totalOfferLots.toLocaleString('id-ID')}</span>
           </div>
+          <div />
         </div>
       </div>
     </div>
