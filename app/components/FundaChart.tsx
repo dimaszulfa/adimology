@@ -29,13 +29,7 @@ interface ApiResponse {
 }
 
 const TIMEFRAMES = [
-  { label: '1W', value: '1w' },
-  { label: '1M', value: '1m' },
-  { label: '3M', value: '3m' },
-  { label: '6M', value: '6m' },
   { label: '1Y', value: '1y' },
-  { label: '2Y', value: '2y' },
-  { label: '5Y', value: '5y' },
 ];
 
 const formatNumber = (num: number): string => {
@@ -184,7 +178,7 @@ export default function FundaChart({ ticker }: FundaChartProps) {
       <div className="grid grid-cols-4 gap-3 mb-4">
         <div className="bg-[#16213e] rounded-lg p-3">
           <p className="text-xs text-gray-400 mb-1">Shareholders</p>
-          <p className="text-lg font-semibold text-purple-400">
+          <p className="text-lg font-semibold text-cyan-400">
             {formatNumber(shareholderStats.current)}
           </p>
           <p className={`text-xs ${shareholderStats.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -221,7 +215,7 @@ export default function FundaChart({ ticker }: FundaChartProps) {
             type="checkbox"
             checked={showShareholders}
             onChange={(e) => setShowShareholders(e.target.checked)}
-            className="w-4 h-4 rounded bg-[#16213e] border-purple-500 text-purple-600 focus:ring-purple-500"
+            className="w-4 h-4 rounded bg-[#16213e] border-cyan-500 text-cyan-500 focus:ring-cyan-500"
           />
           <span className="text-sm text-gray-300">Shareholders</span>
         </label>
@@ -268,8 +262,8 @@ export default function FundaChart({ ticker }: FundaChartProps) {
             <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="shareholderGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
@@ -289,7 +283,7 @@ export default function FundaChart({ ticker }: FundaChartProps) {
               <YAxis
                 yAxisId="shareholders"
                 orientation="left"
-                stroke="#8b5cf6"
+                stroke="#06b6d4"
                 tick={{ fill: '#9ca3af', fontSize: 11 }}
                 axisLine={{ stroke: '#374151' }}
                 tickFormatter={formatNumber}
@@ -321,14 +315,14 @@ export default function FundaChart({ ticker }: FundaChartProps) {
                     dataKey="Number of Shareholders"
                     name="Shareholders"
                     fill="url(#shareholderGradient)"
-                    stroke="#8b5cf6"
+                    stroke="#06b6d4"
                     strokeWidth={2}
                   />
                   <Bar
                     yAxisId="shareholders"
                     dataKey="Number of Shareholders"
                     name="Shareholders"
-                    fill="#8b5cf6"
+                    fill="#06b6d4"
                     opacity={0.3}
                   />
                 </>
