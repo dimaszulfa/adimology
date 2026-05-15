@@ -800,16 +800,7 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
                     }}>
                       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
-                          {company.symbol}
-                        </div>
-                        <div style={{
-                          fontSize: '0.7rem',
-                          color: 'var(--text-muted)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
-                        }}>
-                          {company.desc || company.name}
+                          {company.symbol} <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>— {company.desc || company.name}</span>
                         </div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                           {company.type} • {company.exchange}
