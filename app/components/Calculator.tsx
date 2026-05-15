@@ -449,9 +449,11 @@ export default function Calculator({ selectedStock }: CalculatorProps) {
               <div style={{ flex: '1 1 0', minWidth: '400px' }}>
                 <PriceGraph ticker={result.input.emiten} />
               </div>
+              {/*
               <div style={{ flex: '1 1 0', minWidth: '400px', display: 'flex' }}>
                 <BrokerFlowCard emiten={result.input.emiten} />
               </div>
+              */}
             </div>
 
             {/* Agent Story Section - Full Width */}
