@@ -87,6 +87,31 @@ export default function BidOfferCard({ ticker }: BidOfferCardProps) {
   const totalBidLots = topBids.reduce((sum: number, b: BidOfferItem) => sum + Math.floor((parseInt(b.volume) || 0) / 100), 0);
   const totalOfferLots = topOffers.reduce((sum: number, o: BidOfferItem) => sum + Math.floor((parseInt(o.volume) || 0) / 100), 0);
 
+  // Calculate offer pressure: compare offers near price vs bids near price
+  const lastPrice = parseInt(close) || 0;
+  const bestBidPrice = topBids.length > 0 ? parseInt(topBids[0].price) : 0;
+  const bestOfferPrice = topOffers.length > 0 ? parseInt(topOffers[0].price) : 0;
+  
+  const bidDistance = bestBidPrice > 0 ? lastPrice - bestBidPrice : 0;
+  const offerDistance = bestOfferPrice > 0 ? bestOfferPrice - lastPrice : 0;
+  
+  // Get volume at same distance from price for comparison
+  const getVolumeAtDistance = (side: 'bid' | 'offer', distance: number): number => {
+    const items = side === 'bid' ? topBids : topOffers;
+    const targetPrice = side === 'bid' ? lastPrice - distance : lastPrice + distance;
+    const item = items.find((i: BidOfferItem) => parseInt(i.price) === targetPrice);
+    return item ? parseInt(item.volume) || 0 : 0;
+  };
+  
+  // Compare volumes at same distance
+  const compareVolAtSameDistance = Math.min(bidDistance, offerDistance);
+  const bidVolAtDistance = getVolumeAtDistance('bid', compareVolAtSameDistance);
+  const offerVolAtDistance = getVolumeAtDistance('offer', compareVolAtSameDistance);
+  
+  // Determine pressure direction
+  const offerPressure = offerVolAtDistance > bidVolAtDistance;
+  const pressureDiff = Math.abs(offerVolAtDistance - bidVolAtDistance);
+
   const formatVolume = (vol: string) => {
     const num = parseInt(vol) || 0;
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -138,7 +163,7 @@ export default function BidOfferCard({ ticker }: BidOfferCardProps) {
       {/* Stats Row */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
+        gridTemplateColumns: 'repeat(5, 1fr)',
         gap: '0.5rem',
         padding: '0.75rem 1rem',
         background: 'rgba(0, 0, 0, 0.1)'
@@ -161,6 +186,32 @@ export default function BidOfferCard({ ticker }: BidOfferCardProps) {
           <div style={{ fontSize: '0.65rem', color: '#9ca3af', marginBottom: '2px' }}>VALUE</div>
           <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>
             Rp {(value / 1000000000).toFixed(1)}B
+          </div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '0.65rem', color: '#9ca3af', marginBottom: '2px' }}>OFFER PRESSURE</div>
+          <div style={{
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            color: offerPressure ? '#ef4444' : '#22c55e',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '4px'
+          }}>
+            {offerPressure ? (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 19V5M5 12l7-7 7 7" />
+              </svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 5v14M19 12l-7 7-7-7" />
+              </svg>
+            )}
+            {offerPressure ? 'OFFER' : 'BID'}
+          </div>
+          <div style={{ fontSize: '0.6rem', color: '#6b7280', marginTop: '2px' }}>
+            {offerPressure ? '+' : '-'}{Math.floor(pressureDiff / 100)} lots
           </div>
         </div>
       </div>
