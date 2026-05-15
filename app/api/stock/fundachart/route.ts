@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     // Find exact match or use first result
     const exactMatch = searchResults.find(
-      (r) => r.symbol.toUpperCase() === ticker.toUpperCase() ||
+      (r) => r.symbol?.toUpperCase() === ticker.toUpperCase() ||
             r.symbol_2?.toUpperCase() === ticker.toUpperCase() ||
             r.symbol_3?.toUpperCase() === ticker.toUpperCase()
     );
